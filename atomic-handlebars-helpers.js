@@ -33,6 +33,42 @@
 
 $(document).ready(function() {
 	
+	/* some type checking an coercion helpers */
+	function bool(b) {
+		return (typeof b === 'string' && (
+			b.toLowerCase() === 'false'
+			|| b === '0'
+		)) ? false : Boolean(b);
+	}
+	
+	function fixed(f,n) {
+		return float(f).toFixed(ifdef(n,int(n),2));
+	}
+	
+	function float(f) {
+		var ff;
+		ff = parseFloat(f,10);
+		return isFinite(ff) ? ff : 0;
+	}
+	
+	function ifdef(v,a,b) {
+		return isdef(v) ? a : b;
+	}
+	
+	function int(n) {
+		return parseInt(n,10) | 0;
+	}
+	
+	function isarray(a) {
+		return a instanceof Array;
+	}
+	
+	function isdef(v) {
+		return typeof v !== 'undefined' && v !== null;
+	}
+	/* end type helpers */
+	
+	
 	// For debugging values inside of a template
 	Handlebars.registerHelper('log', function(context) {
 		if(console && (typeof console.log === 'function')){
@@ -228,22 +264,7 @@ $(document).ready(function() {
 		var s = '<div class="progress ' + extraclasses + '">' +
 				'<div class="progress-bar ' + barcolor + '" style="width: ' + w + '%;">' + (pct|0) + '%</div></div>';
 		
- 		return new Handlebars.SafeString(s);
- 	});
-	
- 	
-	Handlebars.registerHelper('cmp',function(v1,op,v2,context){
-		var ops = {
-				'===': function(l,r){ return l===r; },
-				'!==': function(l,r){ return l!==r; },
-				'==' : function(l,r){ return l==r; },
-				'!=' : function(l,r){ return l!=r; },
-				'<=' : function(l,r){ return l<=r; },
-				'>=' : function(l,r){ return l>=r; },
-				'<'  : function(l,r){ return l<r; },
-				'>'  : function(l,r){ return l>r; }
-			};
-		return (ops[op] && ops[op](v1,v2)) ? context.fn(this) : context.inverse(this);
+		return new Handlebars.SafeString(s);
 	});
 	
 	
@@ -251,21 +272,39 @@ $(document).ready(function() {
 		return new Handlebars.SafeString(val ? val : def);
 	});
 	
-	Handlebars.registerHelper('logic',function(v1,op,v2,context){
-		var ops = {
-				'and' : function(l,r){ return l && r; },
-				'or'  : function(l,r){ return l || r; },
-				'xor' : function(l,r){ return (l || r) && ! (l && r); },
-				'not' : function(l,r){ return ! l; },
-				'nand': function(l,r){ return ! (l && r); },
-				'nor' : function(l,r){ return ! (l || r); }
+	function hb_helper_logic(v1, op, v2, context) {
+		var cops = {
+				'===' : function(l,r) { return l===r; },
+				'!==' : function(l,r) { return l!==r; },
+				'=='  : function(l,r) { return l==r; },
+				'!='  : function(l,r) { return l!=r; },
+				'<='  : function(l,r) { return l<=r; },
+				'>='  : function(l,r) { return l>=r; },
+				'<'   : function(l,r) { return l<r; },
+				'>'   : function(l,r) { return l>r; }
 			};
-		return (ops[op] && ops[op](bool(v1),bool(v2))) ? context.fn(this) : context.inverse(this);
-	});
+		
+		var lops = {
+				'and'  : function(l,r) { return l && r; },
+				'or'   : function(l,r) { return l || r; },
+				'xor'  : function(l,r) { return (l || r) && ! (l && r); },
+				'not'  : function(l,r) { return ! l; },
+				'nand' : function(l,r) { return ! (l && r); },
+				'nor'  : function(l,r) { return ! (l || r); }
+			};
+		return (lops[op] && lops[op](bool(v1),bool(v2))) || (cops[op] && cops[op](v1,v2))
+			? context.fn(this)
+			: context.inverse(this);
+	}
+	
+	// cmp and logic have been combined and are now interchangable
+	Handlebars.registerHelper('cmp',hb_helper_logic);
+	Handlebars.registerHelper('logic',hb_helper_logic);
+	
 	
 	Handlebars.registerHelper('math', function(l,fn,r,opt) {
-		l = parseFloat(l);
-		r = parseFloat(r);
+		l = float(l);
+		r = float(r);
 		
 		var ops = {
 				'+': l + r,
@@ -275,39 +314,42 @@ $(document).ready(function() {
 				'%': l % r
 			};
 		
-		return (opt === 'int') ? parseInt(ops[fn],10) : ops[fn];
+		return (opt === 'int') ? parseInt(ops[fn], 10) : ops[fn];
 	});
 	
 	
-	Handlebars.registerHelper('selectOptions',function(options, selectedValue, defaultTitle, defaultValue){
-		var dV = typeof defaultValue == 'undefined' || typeof defaultValue == 'object' ? '' : defaultValue;
+	Handlebars.registerHelper('selectOptions',function(options, selectedValue, defaultTitle, defaultValue) {
+		var dV = isndef(defaultValue) || isobj(defaultValue) ? '' : defaultValue;
 
-		var def = typeof defaultTitle != 'object' && typeof defaultTitle != 'undefined' ? '' +
-					'<option value="'+dV + 
-					'"' + (selectedValue == dV ? ' selected="selected"' : '') + 
-					'>'+defaultTitle+'</option>' : '<option selected="selected"></option>';
+		var def = isdef(defaultTitle) && !isobj(defaultTitle)
+			? '' +
+				'<option value="'+dV +
+				'"' + (selectedValue == dV ? ' selected="selected"' : '') +
+				'>'+defaultTitle+'</option>'
+			: '<option selected="selected"></option>';
 
-		return new Handlebars.SafeString(def + _(options).reduce(function(m,v){
-			if (typeof v.value != 'undefined') {
-				return m + 
+		return new Handlebars.SafeString(def + _.reduce(options,function(m,v) {
+			if (isdef(v.value)) {
+				return m +
 					'<option value="'+v.value + '"' +
-					 (selectedValue == v.value ? ' selected="selected"' : '') + 
-					 (v.disabled == true ? ' disabled="disabled"' : '') + 
+					(selectedValue == v.value ? ' selected="selected"' : '') +
+					(v.disabled === true ? ' disabled="disabled"' : '') +
 					'>'+v.title+'</option>';
 			} else return m+'<option>'+v.title+'</option>';
 		},''));
 	});
 	
-	Handlebars.registerHelper('makeEnum',function(valueList){
-		if (!(valueList instanceof Array)) {
+	
+	Handlebars.registerHelper('makeEnum', function(valueList) {
+		if (!isarray(valueList)) {
 			valueList = valueList.split(',');
 		}
 		
-		valueList = _(valueList).map(function(v){
+		valueList = _.map(valueList,function(v) {
 			return v.split('|');
 		});
 		
-		return new Handlebars.SafeString(_(valueList).reduce(function(m,v){
+		return new Handlebars.SafeString(_.reduce(valueList,function(m,v) {
 			if (v.length === 2) {
 				return m+'<option value="'+v[0]+'">'+v[1]+'</option>';
 			} else return m+'<option>'+v[0]+'</option>';
