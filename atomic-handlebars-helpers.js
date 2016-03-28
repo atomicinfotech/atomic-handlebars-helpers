@@ -1,6 +1,6 @@
 /*	--------------------------------------------------
 	:: Handlebars Helpers
-	-------------------------------------------------- 
+	--------------------------------------------------
 
 	Atomic Handlebars Helpers
 	http://atomicinfotech.com/atomic-handlebars-helpers
@@ -10,7 +10,7 @@
 	
 	The MIT License (MIT)
 
-	Copyright (c) 2013 Atomic Infotech
+	Copyright (c) 2013 - 2016  Atomic Infotech
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy of
 	this software and associated documentation files (the "Software"), to deal in
@@ -45,85 +45,9 @@ $(document).ready(function() {
 		return encodeURIComponent(string);
 	});
 
-	// HELPER: #key_value
-	//
-	// Usage: {{#key_value obj}} Key: {{key}} // Value: {{value}} {{/key_value}}
-	//
-	// Iterate over an object, setting 'key' and 'value' for each property in
-	// the object.
-	Handlebars.registerHelper("key_value", function(obj, options) {
-		var buffer = "",
-			key;
-	
-		for (key in obj) {
-			if (obj.hasOwnProperty(key)) {
-				buffer += options.fn({key: key, value: obj[key]});
-			}
-		}
-	
-		return buffer;
-	});
-
-	// HELPER: #each_with_key
-	//
-	// Usage: {{#each_with_key container key="myKey"}}...{{/each_with_key}}
-	//
-	// Iterate over an object containing other objects. Each
-	// inner object will be used in turn, with an added key ("myKey")
-	// set to the value of the inner object's key in the container.
-	Handlebars.registerHelper("each_with_key", function(obj, options) {
-		var context,
-			buffer = "",
-			key,
-			keyName = options.hash.key;
-		for (key in obj) {
-			if (obj.hasOwnProperty(key)) {
-				context = obj[key];
-				if (keyName) {
-					context[keyName] = key;
-				}
-				buffer += options.fn(context);
-			}
-		}
-		
-		return buffer;
-	});
-	
-	// Indexed version of each (only works with arrays)
-	Handlebars.registerHelper('each_i', function(context, options) {
-		var ret = '';
-		if (context) {
-			for(var i=0, j=context.length; i<j; i++) {
-				context[i]._index = i;
-				ret += options.fn(context[i]);
-			}
-		}
-		return ret;
-	});
-
-	// Keyed version on each (works with arrays and other objects)
-	Handlebars.registerHelper('each_k', function(/* obj,key,ctx */) {
-		var obj,key,ctx,ret;
-		
-		arguments = Array.prototype.slice.call(arguments);
-		
-		ctx = arguments.pop();
-		
-		obj = arguments[0] || {};
-		key = arguments[1] || '_k';
-		ret = '';
-		
-		for (var x in obj) {
-			obj[x][key] = x;
-			ret += ctx.fn(obj[x]);
-		}
-		
-		return ret;
-	});
-
 	Handlebars.registerHelper("apply", function(templateName, data) {
 		var t = HandleBarsTemplates[templateName];
-		if(typeof t == 'undefined') 
+		if(typeof t == 'undefined')
 			return new Handlebars.SafeString('<!-- apply error [' + templateName + '] -->');
 		
 		return new Handlebars.SafeString(t(data));
@@ -145,9 +69,9 @@ $(document).ready(function() {
 	
 		for(var i = 0; i <= 6; i++) {
 			buffer += options.fn({
-				dayNames: names[i], 
-				dayData: indexed_obj[i], 
-				index: i, 
+				dayNames: names[i],
+				dayData: indexed_obj[i],
+				index: i,
 				indexOB: i+1,
 			});
 		}
@@ -161,11 +85,11 @@ $(document).ready(function() {
 	});
 
 	Handlebars.registerHelper("YesNo", function(x) {
-		return x == true ? 'Yes' : 'No';
+		return x === true ? 'Yes' : 'No';
 	});
 
 	Handlebars.registerHelper("yesno", function(x) {
-		return x == true ? 'yes' : 'no';
+		return x === true ? 'yes' : 'no';
 	});
 	
 	// not the prettiest, but it's good enough
@@ -239,16 +163,16 @@ $(document).ready(function() {
 	});
 	
 	Handlebars.registerHelper("formatDate", function(/* d,fmtStr */) {
-		var dt,fs,ctx;
+		var args,dt,fs,ctx;
 		
-		arguments = Array.prototype.slice.call(arguments);
+		args = Array.prototype.slice.call(arguments);
 		
-		ctx = arguments.pop();
+		ctx = args.pop();
 		
-		dt = arguments[0];
-		fs = arguments[1] || "YYYY-MM-DD";
+		dt = args[0];
+		fs = args[1] || "YYYY-MM-DD";
 		
-		if(typeof dt == 'undefined' || dt == null) {
+		if(typeof dt === 'undefined' || dt === null || dt === '') {
 			return 'Never';
 		}
 		
@@ -256,13 +180,13 @@ $(document).ready(function() {
 	});
 	
 	Handlebars.registerHelper("hourFormat", function(d) {
-		return d == 12 ? "NOON" : (d % 12) + (d / 12 < 1 ? "AM" : "PM")
+		return d == 12 ? "NOON" : (d % 12) + (d / 12 < 1 ? "AM" : "PM");
 	});
 	
 	
 	Handlebars.registerHelper("delta", function(diff, pct, decimals) {
 		
-		if(typeof decimals == undefined) decimals = 0;
+		if(typeof decimals === 'undefined') decimals = 0;
 		
 		var pm = typeof parseFloat(diff) == "number" ? (diff >= 0 ? 'good' : 'bad') : '';
 		
@@ -272,27 +196,30 @@ $(document).ready(function() {
 		var pctf = parseFloat(pct);
 		pct = typeof pctf == "number" && !isNaN(pctf) ? (pctf.toMoney(1) + '%') : pct;
 		
-		var s = '<span class="delta ' + pm +'"><span class="diff">' + 
+		var s = '<span class="delta ' + pm +'"><span class="diff">' +
 			diff + '</span> <span class="pct">' + pct + '</span></span>';
 		
- 		return new Handlebars.SafeString(s);
- 	});
+		return new Handlebars.SafeString(s);
+	});
 	
 	Handlebars.registerHelper("progress", function(percent, yellow, red, extraclasses) {
 		
-		extraclasses = typeof extraclasses == 'string' || '';
+		extraclasses = typeof extraclasses == 'string' ? extraclasses : '';
 		
 		var pctf = parseFloat(percent);
 		pct = (typeof pctf == "number" && !isNaN(pctf)) ? pctf : 0;
 		
 		var rf = parseFloat(red);
 		var yf = parseFloat(yellow);
-		if(typeof rf == 'number' && rf <= pctf)
+		if(typeof rf == 'number' && rf <= pctf) {
 			barcolor = 'progress-bar-danger';
-		else if (typeof yf == 'number' && yf <= pctf)
+		}
+		else if (typeof yf == 'number' && yf <= pctf) {
 			barcolor = 'progress-bar-warning';
-		else
+		}
+		else {
 			barcolor = 'progress-bar-success';
+		}
 		
 		// clamp the width number
 		var w = pct > 100 ? 100 : (pct < 0 ? 0 : pct);
@@ -389,32 +316,20 @@ $(document).ready(function() {
 	
 	// google places convert number to word description
 	Handlebars.registerHelper("googleplacesrating", function(rating) {
-		rating = parseFloat(rating);
-
-		if (rating == 0) {
-			return 'Poor';
-		} else if (rating == 1) {
-			return 'Good';
-		} else if (rating == 2) {
-			return 'Very Good';
-		} else if (rating == 3) {
-			return 'Excellent';
-		} else { 
-			return '';
-		}
-
+		rating = Math.floor(float(rating));
+		
+		return ['Poor','Good','Very Good','Excellent'][rating] || '';
 	});
 
 	// formats numbers to desired decial places
 	Handlebars.registerHelper("numFormat", function(num, decimals) {
-		var num = parseFloat(num);
-		return num.toFixed(decimals);
+		return fixed(num,decimals);
 	});
 	
 
 	Handlebars.registerHelper('select', function( value, options ){
-        var $el = $('<select />').html( options.fn(this) );
-        $el.find('[value=' + value + ']').attr({'selected':'selected'});
-        return $el.html();
-    });
+		var $el = $('<select />').html( options.fn(this) );
+		$el.find('[value=' + value + ']').attr({'selected':'selected'});
+		return $el.html();
+	});
 });
