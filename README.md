@@ -3,6 +3,13 @@
 A collection of useful helpers for handlebars.js.
 
 
+# Dependencies
+
+* Handlebars is assumed to be loaded
+* jQuery is assumed to be loaded
+* `formatDate` helper uses moment.js
+
+
 # License
 
 The MIT License (MIT)
