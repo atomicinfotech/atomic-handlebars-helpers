@@ -317,6 +317,15 @@ $(document).ready(function() {
 		return (opt === 'int') ? parseInt(ops[fn], 10) : ops[fn];
 	});
 	
+	Handlebars.registerHelper('clamp', function(value, min, max) {
+		value = float(value);
+		
+		min = float(min);
+		max = float(max);
+		
+		return Math.min(max, Math.max(value, min));
+	});
+	
 	
 	Handlebars.registerHelper('selectOptions',function(options, selectedValue, defaultTitle, defaultValue) {
 		var dV = isndef(defaultValue) || isobj(defaultValue) ? '' : defaultValue;
