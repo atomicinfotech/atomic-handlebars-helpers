@@ -3,7 +3,6 @@
 	--------------------------------------------------
 
 	Atomic Handlebars Helpers
-	http://atomicinfotech.com/atomic-handlebars-helpers
 	http://github.com/atomicinfotech/atomic-handlebars-helpers
 
 	---------------------------------------------------
